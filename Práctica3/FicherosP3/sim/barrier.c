@@ -70,18 +70,9 @@ int sys_barrier_wait(sys_barrier_t *barrier)
   	barrier->nr_threads_arrived++;
 
   	if(barrier->nr_threads_arrived < barrier->max_threads){
-  		while (barrier->nr_threads_arrived != 0)
-   			pthread_cond_wait(&(barrier->cond), &(barrier->mutex));
+   		pthread_cond_wait(&(barrier->cond), &(barrier->mutex));
   	}
   	else{
-
-  		//Despertamos
-	    /*if(barrier->cur_barrier == 0){
-	    	barrier->cur_barrier = 1;
-	    }
-	    else if(barrier->cur_barrier == 1){
-	      	barrier->cur_barrier = 0;
-	    }*/
 	    barrier->nr_threads_arrived = 0;  
 	    pthread_cond_broadcast(&(barrier->cond));
   	}
