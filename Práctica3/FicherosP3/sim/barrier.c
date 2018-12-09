@@ -34,9 +34,7 @@ int sys_barrier_init(sys_barrier_t *barrier, unsigned int nr_threads)
 
 	barrier->max_threads = nr_threads;				//Asignamos el valor de entrada a max_threads
 
-	barrier->nr_threads_arrived[0] = 0;				//Ponemos el número de threads a 0
-    barrier->nr_threads_arrived[1] = 0;
-    barrier->cur_barrier = 0;
+	barrier->nr_threads_arrived = 0;				//Ponemos el número de threads a 0
   
     return 0;
 }
@@ -69,22 +67,22 @@ int sys_barrier_wait(sys_barrier_t *barrier)
 	    ... To be completed ....
 	*/
 	pthread_mutex_lock(&(barrier->mutex));
-  	barrier->nr_threads_arrived[barrier->cur_barrier]++;
+  	barrier->nr_threads_arrived++;
 
-  	if(barrier->nr_threads_arrived[barrier->cur_barrier] < barrier->max_threads){
-  		while (barrier->nr_threads_arrived[barrier->cur_barrier] != 0)
+  	if(barrier->nr_threads_arrived < barrier->max_threads){
+  		while (barrier->nr_threads_arrived != 0)
    			pthread_cond_wait(&(barrier->cond), &(barrier->mutex));
   	}
   	else{
 
   		//Despertamos
-	    if(barrier->cur_barrier == 0){
+	    /*if(barrier->cur_barrier == 0){
 	    	barrier->cur_barrier = 1;
 	    }
 	    else if(barrier->cur_barrier == 1){
 	      	barrier->cur_barrier = 0;
-	    }
-	    barrier->nr_threads_arrived[barrier->cur_barrier] = 0;  
+	    }*/
+	    barrier->nr_threads_arrived = 0;  
 	    pthread_cond_broadcast(&(barrier->cond));
   	}
 

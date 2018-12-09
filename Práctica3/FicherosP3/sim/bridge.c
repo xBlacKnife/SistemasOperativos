@@ -30,16 +30,18 @@ void bridge_in(tcar *dcar) {
  *   if yes cars_on_bridge++, set cur_direction, call stat_car_in()
  */
 	//...
+
 	pthread_mutex_lock(&dbridge.mtx);
-	while(dbridge.cars_on_bridge > 2 || dbridge.cur_direction != dcar.my_direction || dbridge.cars_waiting[dcar.my_direction] > 0)//hay un sitio en el puente y puede entrar
+
+	while ((dbridge.cars_on_bridge > 0 && dbridge.cur_direction != dcar->my_direction) || dbridge.cars_on_bridge > 2)//hay un sitio en el puente y puede entrar
 	{
-		dbridge.cars_waiting[dcar.my_direction]++;
-		pthread_cond_wait(&VCs[dcar.my_direction], &dbridge.mtx);
-		dbridge.cars_waiting[dcar.my_direction]--;
+		dbridge.cars_waiting[dcar->my_direction]++;
+		pthread_cond_wait(&dbridge.VCs[dcar->my_direction], &dbridge.mtx);
+		//dbridge.cars_waiting[dcar->my_direction]--;
 	}
 
 	dbridge.cars_on_bridge++;
-	dbridge.cur_direction = dcar.my_direction;
+	dbridge.cur_direction = dcar->my_direction;
 	stat_car_in(dcar);
 	pthread_mutex_unlock(&dbridge.mtx);
 	
@@ -58,13 +60,13 @@ void bridge_out(tcar *dcar) {
 	dbridge.cars_on_bridge--;
 	stat_car_out(dcar);
 
-	if (cars_waiting[dbridge.cur_direction] > 0){
-		dbridge.cars_on_bridge++;
-		cars_waiting[dbridge.cur_direction]--;
+	if (dbridge.cars_waiting[dcar->my_direction] > 0){
+		pthread_cond_signal(&dbridge.VCs[dcar->my_direction]);
+		dbridge.cars_waiting[dcar->my_direction]--;
 	}
-	else if (cars_waiting[(dbridge.cur_direction+1)%2] > 0){
-		dbridge.cur_direction = (dbridge.cur_direction+1)%2;
-		pthread_cond_broadcast(&VCs[dbridge.cur_direction]);
+	else if (dbridge.cars_waiting[(dcar->my_direction+1)%2] > 0){
+		pthread_cond_signal(&dbridge.VCs[(dcar->my_direction+1)%2]);
+		dbridge.cars_waiting[(dcar->my_direction+1)%2]--;
 	}
 	else{
 		dbridge.cur_direction = EMPTY;
